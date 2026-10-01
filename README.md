@@ -20,6 +20,11 @@ $env:THEGAMESDB_API_KEY = "your-api-key"
 docker compose up --build
 ```
 
+```bash
+export THEGAMESDB_API_KEY="your-api-key"
+docker compose up --build
+```
+
 The app sends cleaned game titles to TheGamesDB for lookup. ROM file contents are not sent to the API. Without a key, local cleaning, organization, and SQLite indexing still work.
 
 ## Run directly with Python
