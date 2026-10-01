@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#f3f2ec">
+	<title>ROM Indexer</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--paper: #f3f2ec;
+			--ink: #202722;
+			--muted: #70766e;
+			--line: #d7d8ce;
+			--panel: #fbfbf7;
+			--green: #b9e3a2;
+			--green-ink: #18321b;
+			--orange: #e96c46;
+			--serif: Georgia, "Times New Roman", serif;
+			--sans: "Aptos", "Segoe UI", sans-serif;
+			--mono: "Cascadia Code", Consolas, monospace;
+		}
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			background-color: var(--paper);
+			background-image: linear-gradient(rgba(32, 39, 34, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(32, 39, 34, .025) 1px, transparent 1px);
+			background-size: 28px 28px;
+			color: var(--ink);
+			font-family: var(--sans);
+		}
+		button, input { font: inherit; }
+		button { color: inherit; }
+		.shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+		.topbar { height: 72px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+		.brand { display: flex; align-items: center; gap: 11px; font-size: 14px; font-weight: 700; }
+		.brand-mark { display: grid; place-items: center; width: 28px; height: 28px; background: var(--ink); color: var(--green); font: 14px var(--mono); }
+		.local-label { display: flex; gap: 8px; align-items: center; color: var(--muted); font: 11px var(--mono); text-transform: uppercase; }
+		.local-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #588553; box-shadow: 0 0 0 3px #dcebd5; }
+		main { padding: 50px 0 70px; }
+		.intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 28px; margin-bottom: 36px; animation: enter .45s ease-out both; }
+		.eyebrow { margin: 0 0 12px; color: var(--orange); font: 11px var(--mono); text-transform: uppercase; }
+		h1 { max-width: 650px; margin: 0; font: 400 54px/1.02 var(--serif); letter-spacing: 0; }
+		.intro-copy { max-width: 370px; margin: 16px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+		.download { display: inline-flex; align-items: center; gap: 10px; padding: 12px 15px; border: 1px solid var(--ink); background: transparent; text-decoration: none; font-size: 13px; font-weight: 650; transition: background .18s, color .18s; }
+		.download:hover { background: var(--ink); color: var(--panel); }
+		.download svg { width: 16px; height: 16px; }
+		.workspace { display: grid; grid-template-columns: minmax(300px, .85fr) minmax(0, 1.4fr); min-height: 420px; border: 1px solid var(--line); background: var(--panel); animation: enter .55s .06s ease-out both; }
+		.ingest { padding: 25px; border-right: 1px solid var(--line); }
+		.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 20px; }
+		h2 { margin: 0; font: 400 24px var(--serif); letter-spacing: 0; }
+		.step { color: var(--muted); font: 10px var(--mono); }
+		.tabs { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 19px; }
+		.tab { padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; }
+		.tab[aria-selected="true"] { border-color: var(--orange); color: var(--ink); font-weight: 700; }
+		.dropzone { display: flex; min-height: 181px; padding: 22px; align-items: center; justify-content: center; flex-direction: column; text-align: center; border: 1px dashed #aeb4a9; background: #f7f8f1; cursor: pointer; transition: border-color .18s, background .18s; }
+		.dropzone:hover, .dropzone.dragover { border-color: #52824d; background: #f0f6e9; }
+		.folder-icon { display: grid; place-items: center; width: 39px; height: 39px; margin-bottom: 12px; border-radius: 50%; background: var(--green); color: var(--green-ink); }
+		.folder-icon svg { width: 20px; height: 20px; }
+		.drop-title { margin: 0; font-size: 13px; font-weight: 700; }
+		.drop-sub { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+		.drop-count { min-height: 16px; margin-top: 12px; color: #426c3e; font: 10px var(--mono); }
+		#folder-input { display: none; }
+		.path-field { display: block; width: 100%; height: 42px; margin: 0 0 10px; padding: 0 11px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: 12px var(--mono); }
+		.path-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+		.submit { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 46px; margin-top: 16px; padding: 0 15px; border: 0; background: var(--ink); color: #fff; cursor: pointer; font-size: 13px; font-weight: 700; transition: background .18s; }
+		.submit:hover:not(:disabled) { background: #395b37; }
+		.submit:disabled { cursor: wait; opacity: .65; }
+		.submit svg { width: 16px; height: 16px; }
+		.private-note { display: flex; gap: 8px; margin-top: 15px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+		.private-note svg { width: 14px; height: 14px; flex: none; }
+		.library { min-width: 0; padding: 25px; }
+		.library-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+		.library-title { display: flex; gap: 12px; align-items: baseline; }
+		.count { color: var(--muted); font: 11px var(--mono); }
+		.result-count { color: var(--muted); font-size: 11px; }
+		.status { min-height: 24px; margin: 14px 0 0; color: #426c3e; font-size: 12px; }
+		.status.error { color: #b33f27; }
+		.game-list { margin-top: 3px; }
+		.game-row { display: grid; grid-template-columns: 30px minmax(130px, 1.2fr) minmax(110px, .9fr) 100px 120px; gap: 12px; align-items: center; min-height: 54px; border-bottom: 1px solid #e8e9e1; animation: enter .3s ease-out both; }
+		.game-cover { width: 26px; height: 38px; object-fit: cover; background: #e9e9df; }
+		.game-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 650; }
+		.game-system, .game-date { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+		.game-state { color: #54804d; font: 10px var(--mono); text-align: right; }
+		.list-head { display: grid; grid-template-columns: 30px minmax(130px, 1.2fr) minmax(110px, .9fr) 100px 120px; gap: 12px; padding: 13px 0 9px; color: #8a9085; font: 9px var(--mono); text-transform: uppercase; }
+		.empty { display: grid; min-height: 235px; place-items: center; color: var(--muted); text-align: center; }
+		.empty-inner { max-width: 220px; }
+		.empty-symbol { margin-bottom: 12px; color: #b9beb2; font: 30px var(--serif); }
+		.empty p { margin: 0; font-size: 12px; line-height: 1.6; }
+		.api-note { margin-top: 12px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+		[hidden] { display: none !important; }
+		@keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+		@media (max-width: 900px) {
+			.workspace { grid-template-columns: 1fr; }
+			.ingest { border-right: 0; border-bottom: 1px solid var(--line); }
+		}
+		@media (max-width: 760px) {
+			.shell { width: min(100% - 30px, 540px); }
+			main { padding-top: 34px; }
+			.intro { grid-template-columns: 1fr; align-items: start; gap: 20px; }
+			.intro h1 { font-size: 43px; }
+			.download { justify-self: start; }
+			.workspace { grid-template-columns: 1fr; }
+			.ingest { border-right: 0; border-bottom: 1px solid var(--line); }
+			.library { padding: 22px 17px; }
+		}
+		@media (max-width: 480px) {
+			.shell { width: calc(100% - 24px); }
+			.topbar { height: 60px; }
+			main { padding-top: 27px; }
+			.local-label { font-size: 9px; }
+			.game-row, .list-head { grid-template-columns: 30px minmax(85px, 1fr) minmax(75px, .8fr) 72px; gap: 8px; }
+			.game-date, .list-head span:nth-child(4) { display: none; }
+			.game-state { font-size: 9px; }
+		}
+		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+	</style>
+</head>
+<body>
+	<header class="topbar shell">
+		<div class="brand"><span class="brand-mark" aria-hidden="true">R</span><span>ROM INDEXER</span></div>
+		<div class="local-label">Local library</div>
+	</header>
+	<main class="shell">
+		<section class="intro" aria-labelledby="page-title">
+			<div>
+				<p class="eyebrow">Collection tools / 01</p>
+				<h1 id="page-title">A little order<br>for your game shelf.</h1>
+				<p class="intro-copy">Clean release clutter, sort by system, and keep a searchable record of your local collection.</p>
+			</div>
+			<a class="download" href="/api/download" aria-label="Download the organized ROM library as a ZIP file">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
+				Download organized library
+			</a>
+		</section>
+
+		<section class="workspace" aria-label="ROM indexing workspace">
+			<div class="ingest">
+				<div class="section-head"><h2>Bring in games</h2><span class="step">01 / SOURCE</span></div>
+				<div class="tabs" role="tablist" aria-label="ROM source">
+					<button class="tab" id="upload-tab" type="button" role="tab" aria-selected="true" aria-controls="upload-panel">Upload folder</button>
+					<button class="tab" id="mounted-tab" type="button" role="tab" aria-selected="false" aria-controls="mounted-panel">Mounted folder</button>
+				</div>
+				<div id="upload-panel" role="tabpanel" aria-labelledby="upload-tab">
+					<label class="dropzone" id="dropzone" for="folder-input">
+						<span class="folder-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6.5h7l2 2h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/></svg></span>
+						<span class="drop-title">Drop a folder or choose one</span>
+						<span class="drop-sub">ROM files stay on this device</span>
+						<span class="drop-count" id="file-count"></span>
+					</label>
+					<input id="folder-input" type="file" multiple webkitdirectory directory>
+				</div>
+				<div id="mounted-panel" role="tabpanel" aria-labelledby="mounted-tab" hidden>
+					<input class="path-field" id="mounted-folder" type="text" value="" placeholder="Folder inside /roms, or leave blank" aria-label="Mounted ROM folder path">
+					<p class="path-hint">The folder must be mounted into the app container at <code>/roms</code>. Subfolders are included.</p>
+				</div>
+				<button class="submit" id="index-button" type="button">
+					<span>Index selected games</span>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+				</button>
+				<div class="private-note">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.8 8 7 10 4.2-2 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+					<span>Files and the index stay local. {% if api_configured %}Cleaned titles are sent to TheGamesDB for metadata.{% else %}Metadata lookup is off until a TheGamesDB API key is configured.{% endif %}</span>
+				</div>
+			</div>
+			<div class="library">
+				<div class="library-head">
+					<div class="library-title"><h2>Indexed library</h2><span class="count" id="total-count">0</span></div>
+					<span class="result-count" id="visible-count">Showing latest</span>
+				</div>
+				<p class="status" id="status" role="status" aria-live="polite"></p>
+				<div class="list-head" aria-hidden="true"><span></span><span>Game title</span><span>System</span><span>Release</span><span style="text-align:right">Index result</span></div>
+				<div class="game-list" id="game-list"></div>
+				<div class="empty" id="empty-state" hidden><div class="empty-inner"><div class="empty-symbol" aria-hidden="true">—</div><p>Your indexed games will appear here, sorted by system.</p></div></div>
+			</div>
+		</section>
+		{% if not api_configured %}<p class="api-note">TheGamesDB metadata is optional. Set <code>THEGAMESDB_API_KEY</code> in your environment to enable title matching and cover art.</p>{% endif %}
+	</main>
+	<script>
+		const input = document.querySelector('#folder-input');
+		const dropzone = document.querySelector('#dropzone');
+		const fileCount = document.querySelector('#file-count');
+		const indexButton = document.querySelector('#index-button');
+		const status = document.querySelector('#status');
+		const gameList = document.querySelector('#game-list');
+		const emptyState = document.querySelector('#empty-state');
+		const selectedFiles = [];
+		let activeSource = 'upload';
+
+		function setFiles(files) {
+			selectedFiles.splice(0, selectedFiles.length, ...files);
+			const count = selectedFiles.length;
+			fileCount.textContent = count ? `${count.toLocaleString()} file${count === 1 ? '' : 's'} selected` : '';
+		}
+
+		input.addEventListener('change', () => setFiles([...input.files]));
+		for (const eventName of ['dragenter', 'dragover']) {
+			dropzone.addEventListener(eventName, event => { event.preventDefault(); dropzone.classList.add('dragover'); });
+		}
+		for (const eventName of ['dragleave', 'drop']) {
+			dropzone.addEventListener(eventName, event => { event.preventDefault(); dropzone.classList.remove('dragover'); });
+		}
+
+		async function entryFiles(entry, prefix = '') {
+			if (entry.isFile) {
+				const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+				Object.defineProperty(file, 'relativePath', { value: `${prefix}${file.name}` });
+				return [file];
+			}
+			if (!entry.isDirectory) return [];
+			const reader = entry.createReader();
+			const entries = [];
+			while (true) {
+				const batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+				if (!batch.length) break;
+				entries.push(...batch);
+			}
+			return (await Promise.all(entries.map(child => entryFiles(child, `${prefix}${entry.name}/`)))).flat();
+		}
+
+		dropzone.addEventListener('drop', async event => {
+			const items = [...(event.dataTransfer?.items || [])];
+			const entries = items.map(item => item.webkitGetAsEntry?.()).filter(Boolean);
+			if (!entries.length) return setFiles([...event.dataTransfer.files]);
+			try { setFiles((await Promise.all(entries.map(entry => entryFiles(entry)))).flat()); }
+			catch { status.textContent = 'Could not read that folder. Choose it using the folder picker instead.'; status.classList.add('error'); }
+		});
+
+		document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+			activeSource = tab.id === 'upload-tab' ? 'upload' : 'mounted';
+			document.querySelectorAll('.tab').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
+			document.querySelector('#upload-panel').hidden = activeSource !== 'upload';
+			document.querySelector('#mounted-panel').hidden = activeSource !== 'mounted';
+		}));
+
+		function appendRow(game, index) {
+			const row = document.createElement('div');
+			row.className = 'game-row';
+			row.style.animationDelay = `${Math.min(index, 8) * 25}ms`;
+			if (game.cover_path) {
+				const cover = document.createElement('img');
+				cover.className = 'game-cover';
+				cover.src = `/api/covers/${encodeURIComponent(game.cover_path.split('/').pop())}`;
+				cover.alt = '';
+				cover.loading = 'lazy';
+				row.append(cover);
+			} else {
+				const placeholder = document.createElement('span');
+				placeholder.setAttribute('aria-hidden', 'true');
+				row.append(placeholder);
+			}
+			for (const [value, className] of [
+				[game.clean_title, 'game-name'],
+				[game.system, 'game-system'],
+				[game.release_date || '—', 'game-date'],
+				[game.status || (game.gamesdb_id ? 'Metadata found' : 'Indexed'), 'game-state'],
+			]) {
+				const cell = document.createElement('span');
+				cell.className = className;
+				cell.textContent = value;
+				row.append(cell);
+			}
+			gameList.append(row);
+		}
+
+		function renderGames(games, total) {
+			gameList.replaceChildren();
+			document.querySelector('#total-count').textContent = `${total.toLocaleString()} ${total === 1 ? 'game' : 'games'}`;
+			document.querySelector('#visible-count').textContent = games.length ? `Showing ${games.length}` : 'No games yet';
+			emptyState.hidden = games.length > 0;
+			games.forEach(appendRow);
+		}
+
+		async function loadLibrary() {
+			try {
+				const response = await fetch('/api/roms');
+				if (!response.ok) return;
+				const data = await response.json();
+				renderGames(data.roms, data.count);
+			} catch { /* Keep the page usable if the index is temporarily unavailable. */ }
+		}
+
+		indexButton.addEventListener('click', async () => {
+			const body = new FormData();
+			let endpoint;
+			if (activeSource === 'upload') {
+				if (!selectedFiles.length) {
+					status.textContent = 'Choose a folder containing ROM files first.';
+					status.classList.add('error');
+					return;
+				}
+				endpoint = '/api/index-upload';
+				selectedFiles.forEach(file => body.append('files', file, file.relativePath || file.webkitRelativePath || file.name));
+			} else {
+				endpoint = '/api/index-folder';
+				body.append('folder', document.querySelector('#mounted-folder').value.trim());
+			}
+			indexButton.disabled = true;
+			indexButton.querySelector('span').textContent = 'Indexing collection…';
+			status.classList.remove('error');
+			status.textContent = 'Cleaning titles and checking metadata. Large folders may take a moment.';
+			try {
+				const response = await fetch(endpoint, { method: 'POST', body });
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.detail || 'Indexing failed.');
+				status.textContent = `${data.processed} game${data.processed === 1 ? '' : 's'} organized · ${data.matched} metadata match${data.matched === 1 ? '' : 'es'}.`;
+				await loadLibrary();
+			} catch (error) {
+				status.textContent = error.message || 'Indexing failed. Check the folder and try again.';
+				status.classList.add('error');
+			} finally {
+				indexButton.disabled = false;
+				indexButton.querySelector('span').textContent = 'Index selected games';
+			}
+		});
+
+		loadLibrary();
+	</script>
+</body>
+</html>

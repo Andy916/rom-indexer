@@ -1,0 +1,12 @@
+{
+"services": {
+"rom-indexer": {
+"build": ".",
+"container_name": "rom-indexer",
+"ports": ["8000:8000"],
+"environment": {"THEGAMESDB_API_KEY": "${THEGAMESDB_API_KEY:-}"},
+"volumes": ["./data:/data", "./roms:/roms:ro"],
+"restart": "unless-stopped"
+}
+}
+}

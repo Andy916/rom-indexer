@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.py[cod]
+data/organized/
+data/roms.db*
+data/roms-organized.zip
+roms/
