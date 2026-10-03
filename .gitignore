@@ -5,3 +5,6 @@ data/organized/
 data/roms.db*
 data/roms-organized.zip
 roms/
+build/
+dist/
+ROMIndexer.spec

@@ -2,6 +2,21 @@
 
 A local web app for cleaning ROM filenames, sorting games into system folders, and recording metadata in SQLite.
 
+## Windows installer
+
+The Windows installer is built for 64-bit Windows and installs per user without administrator access. It adds a Start Menu shortcut, starts the local app, and opens the browser. Use the ROM Indexer tray icon to exit the app. The server listens only on `127.0.0.1`.
+
+The database, organized ROMs, and mounted-folder input live in `%LOCALAPPDATA%\ROM Indexer`. Uninstalling the app leaves this user data in place.
+
+To build locally on Windows, install Python 3.12 and Inno Setup 6, then run:
+
+```powershell
+python -m pip install -r requirements-windows.txt
+./packaging/windows/build.ps1
+```
+
+The build creates `dist/installer/ROMIndexer-Setup-0.1.0.exe`. GitHub Actions can build the same installer on demand; pushing a `v*` tag builds it and publishes a GitHub Release. The installer does not include a shared TheGamesDB key. To enable metadata, set `THEGAMESDB_API_KEY` in your Windows user environment before launching the app.
+
 ## Run with Docker
 
 1. Put ROMs in the `roms/` folder, or select a folder from the browser after starting the app.
