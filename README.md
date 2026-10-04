@@ -15,7 +15,17 @@ python -m pip install -r requirements-windows.txt
 ./packaging/windows/build.ps1
 ```
 
-The build creates `dist/installer/ROMIndexer-Setup-0.1.0.exe`. GitHub Actions can build the same installer on demand; pushing a `v*` tag builds it and publishes a GitHub Release. The installer does not include a shared TheGamesDB key. To enable metadata, set `THEGAMESDB_API_KEY` in your Windows user environment before launching the app.
+The build creates `dist/installer/ROMIndexer-Setup-0.1.0.exe`. GitHub Actions can build the same installer on demand; pushing a `v*` tag builds it and publishes a GitHub Release. The installer does not include a shared TheGamesDB key. Metadata lookup is optional; indexing and organizing work without it.
+
+To enable metadata in the installed Windows app, get a TheGamesDB API key, then:
+
+1. Open Start and search for **Edit environment variables for your account**.
+2. Under **User variables**, select **New...**.
+3. Set the variable name to `THEGAMESDB_API_KEY` and its value to your API key.
+4. Save the change, then fully exit ROM Indexer from its system tray icon and launch it again from the Start Menu.
+5. Index your games again to look up metadata for them.
+
+The app sends cleaned game titles to TheGamesDB for lookup, not ROM file contents. The key is stored in your Windows user environment; it is not bundled with the installer.
 
 ## Run with Docker
 
