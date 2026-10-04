@@ -32,6 +32,31 @@ def _available_port() -> int:
 			return candidate.getsockname()[1]
 
 
+def _open_browser(url: str) -> bool:
+	shell_execute = ctypes.windll.shell32.ShellExecuteW
+	shell_execute.argtypes = (
+		ctypes.c_void_p,
+		ctypes.c_wchar_p,
+		ctypes.c_wchar_p,
+		ctypes.c_wchar_p,
+		ctypes.c_wchar_p,
+		ctypes.c_int,
+	)
+	shell_execute.restype = ctypes.c_void_p
+	result = shell_execute(None, "open", url, None, None, 1)
+	if result and result > 32:
+		return True
+	if webbrowser.open(url, new=2):
+		return True
+	ctypes.windll.user32.MessageBoxW(
+		None,
+		"ROM Indexer is running, but the browser could not be opened.",
+		APP_NAME,
+		0x10,
+	)
+	return False
+
+
 def _tray_image() -> Image.Image:
 	image = Image.new("RGB", (64, 64), "#202722")
 	draw = ImageDraw.Draw(image)
@@ -91,7 +116,7 @@ def main() -> None:
 		)
 		return
 
-	webbrowser.open(url)
+	_open_browser(url)
 	icon = pystray.Icon(
 		APP_NAME,
 		_tray_image(),
@@ -99,7 +124,7 @@ def main() -> None:
 		pystray.Menu(
 			pystray.MenuItem(
 				"Open ROM Indexer",
-				lambda _icon, _item: webbrowser.open(url),
+				lambda _icon, _item: _open_browser(url),
 				default=True,
 			),
 			pystray.MenuItem("Exit", lambda _icon, _item: _stop(icon, server)),
